@@ -10,9 +10,17 @@ message Calculator {
     int64 num2 = 2;
 }
 
+message PrimeNumberDecomposition {
+    int64 num = 1;
+}
+
 // request 
 message SumRequest {
     Calculator calculator = 1;
+}
+
+message PrimeNumberDecompositionRequest {
+    PrimeNumberDecomposition primeNumberDecomposition = 1;
 }
 
 // response
@@ -20,6 +28,13 @@ message SumResponse {
     int64 result = 1;
 }
 
+message PrimeNumberDecompositionResponse {
+    int64 result = 1;
+}
+
 service CalculatorService {
+    // unary api
     rpc Sum(SumRequest) returns (SumResponse) {}
+    // server streaming api
+    rpc PrimeNumberDecomposition(PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse) {}
 }

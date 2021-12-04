@@ -19,6 +19,29 @@ func main() {
 	c := calculatorpb.NewCalculatorServiceClient(cc)
 
 	doUnary(c)
+	doServerStreaming(c)
+}
+
+func doServerStreaming(c calculatorpb.CalculatorServiceClient) {
+	req := &calculatorpb.PrimeNumberDecompositionRequest{
+		PrimeNumberDecomposition: &calculatorpb.PrimeNumberDecomposition{
+			Num: 150,
+		},
+	}
+
+	resStream, err := c.PrimeNumberDecomposition(context.Background(), req)
+	if err != nil {
+		log.Fatalf("error while calling Decomposition RPC: %v", err)
+	}
+
+	for {
+		msg, err := resStream.Recv()
+		if err == nil {
+			fmt.Println(msg.GetResult())
+		} else {
+			break
+		}
+	}
 }
 
 func doUnary(c calculatorpb.CalculatorServiceClient) {
