@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -25,6 +26,28 @@ func main() {
 
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
+	}
+}
+
+func (*server) ComputeAverages(stream calculatorpb.CalculatorService_ComputeAveragesServer) error {
+	fmt.Printf("ComputeAverages function was invoked with a streaming request")
+	var avg float32
+	var count int32
+
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			return stream.SendAndClose(&calculatorpb.ComputeAveragesResponse{
+				Result: avg / float32(count),
+			})
+		}
+		if err != nil {
+			log.Fatalf("Error while reading client stream: %v", err)
+		}
+
+		sum := req.GetNumber()
+		count++
+		avg += float32(sum)
 	}
 }
 
