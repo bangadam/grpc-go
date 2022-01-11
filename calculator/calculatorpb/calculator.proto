@@ -27,6 +27,10 @@ message ComputeAveragesRequest {
     int64 number = 1;
 }
 
+message FindMaximumRequest {
+    int64 number = 1;
+}
+
 // response
 message SumResponse {
     int64 result = 1;
@@ -40,6 +44,10 @@ message ComputeAveragesResponse {
     float result = 1;
 }
 
+message FindMaximumResponse {
+    int64 result = 1;
+}
+
 service CalculatorService {
     // unary api
     rpc Sum(SumRequest) returns (SumResponse) {}
@@ -47,4 +55,7 @@ service CalculatorService {
     rpc PrimeNumberDecomposition(PrimeNumberDecompositionRequest) returns (stream PrimeNumberDecompositionResponse) {}
     // client streaming api
     rpc ComputeAverages(stream ComputeAveragesRequest) returns (ComputeAveragesResponse) {}
+
+    // bidirectional streaming api
+    rpc FindMaximum(stream FindMaximumRequest) returns (stream FindMaximumResponse) {}
 }

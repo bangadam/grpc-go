@@ -22,6 +22,14 @@ message LongGreetingRequest {
     Greeting greeting = 1;
 }
 
+message GreetEveryoneRequest {
+    Greeting greeting = 1;
+}
+
+message SquareRootRequest {
+    int32 number = 1;
+}
+
 // response
 message GreetResponse {
     string result = 1;
@@ -35,6 +43,14 @@ message LongGreetingResponse {
     string result = 1;
 }
 
+message GreetEveryoneResponse {
+    string result = 1;
+}
+
+message SquareRootResponse {
+    double result = 1;
+}
+
 service GreetService{
     // unary
     rpc Greet(GreetRequest) returns (GreetResponse) {}
@@ -44,4 +60,10 @@ service GreetService{
 
     // client streaming
     rpc LongGreeting(stream LongGreetingRequest) returns (LongGreetingResponse) {}
+
+    // bi directional streaming
+    rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {}
+
+    // error handling
+    rpc SquareRoot(SquareRootRequest) returns (SquareRootResponse) {}
 }
