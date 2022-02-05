@@ -161,3 +161,91 @@ func dataToBlogPb(data *blogItem) *blogpb.Blog {
 		Title:    data.Title,
 	}
 }
+
+func (*server) UpdateBlog(ctx context.Context, req *blogpb.UpdateBlogRequest) (*blogpb.UpdateBlogResponse, error) {
+	fmt.Println("Update blog request")
+	blog := req.GetBlog()
+	oid, err := primitive.ObjectIDFromHex(blog.GetId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Blog ID is invalid")
+	}
+
+	data := &blogItem{}
+	filter := bson.M{"_id": oid}
+
+	res := collection.FindOne(ctx, filter)
+	if err := res.Decode(data); err != nil {
+		return nil, status.Errorf(codes.NotFound, "Blog %v not found", err.Error())
+	}
+
+	// we update our internal struct
+	data.AuthorID = blog.GetAuthorId()
+	data.Content = blog.GetContent()
+	data.Title = blog.GetTitle()
+
+	_, updateErr := collection.ReplaceOne(ctx, filter, data)
+	if updateErr != nil {
+		return nil, status.Errorf(codes.Internal, "Cannot update object in MongoDB: %v", updateErr)
+	}
+
+	return &blogpb.UpdateBlogResponse{
+		Blog: dataToBlogPb(data),
+	}, nil
+}
+
+func (*server) DeleteBlog(ctx context.Context, req *blogpb.DeleteBlogRequest) (*blogpb.DeleteBlogResponse, error) {
+	fmt.Println("Delete blog request")
+	oid, err := primitive.ObjectIDFromHex(req.GetId())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "Blog ID is invalid")
+	}
+
+	filter := bson.M{"_id": oid}
+
+	res, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Blog %v not found", req.GetId()))
+	}
+
+	if res.DeletedCount == 0 {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Blog %v not found", req.GetId()))
+	}
+
+	return &blogpb.DeleteBlogResponse{
+		Id: req.GetId(),
+	}, nil
+
+}
+
+func (*server) ListBlog(_ *blogpb.ListBlogRequest, stream blogpb.BlogService_ListBlogServer) error {
+	fmt.Println("List blog request")
+
+	cur, err := collection.Find(context.Background(), bson.D{{}})
+	if err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Unknown internal error: %v", err),
+		)
+	}
+	defer cur.Close(context.Background())
+
+	for cur.Next(context.Background()) {
+		data := &blogItem{}
+		err := cur.Decode(data)
+		if err != nil {
+			return status.Errorf(
+				codes.Internal,
+				fmt.Sprintf("Error while decoding data from MongoDB: %v", err),
+			)
+
+		}
+		stream.Send(&blogpb.ListBlogResponse{Blog: dataToBlogPb(data)})
+	}
+	if err := cur.Err(); err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Ukwnown internal errors: %v", err),
+		)
+	}
+	return nil
+}
