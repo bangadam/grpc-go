@@ -3,4 +3,4 @@
 <!-- create list -->
 
 - [√]: Unary API
-- [ ]: Streaming API
+- [√]: Streaming API
